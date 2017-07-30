@@ -1,6 +1,7 @@
 #**Traffic Sign Recognition** 
 
 ##Writeup Template
+
 Paul Comitz 
 7/30/2017
 
