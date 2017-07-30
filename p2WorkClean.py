@@ -90,7 +90,6 @@ plt.figure(figsize=(1,1))
 plt.imshow(image)
 print("index is", index,"y_train[index] is:",y_train[index])
 
-
 #n Preprocess the data
 from sklearn.utils import shuffle
 X_train, y_train = shuffle(X_train, y_train)
@@ -203,7 +202,6 @@ print("Did Features and Labels")
 ### Training Pipeline ###
 #########################
 rate = 0.001
-
 logits = LeNet(x)
 cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=one_hot_y, logits=logits)
 loss_operation = tf.reduce_mean(cross_entropy)
@@ -254,3 +252,115 @@ with tf.Session() as sess:
     print("Model saved")
 
 print("Did training")
+
+########################
+### Step 3 Test on   ###
+### New Images       ###
+########################
+import matplotlib.image as img
+new_images = np.ndarray(shape=(5,32,32,3))
+file1 = 'new_images\\10.jpg'
+file2 = 'new_images\\14.jpg'
+file3 = 'new_images\\28.jpg'
+file4 = 'new_images\\40.jpg'
+file5 = 'new_images\\8.jpg'
+
+#new lables and images 
+new_labels = ([10,14,28,40,8])
+new_images[0]= img.imread(file1) 
+new_images[1]= img.imread(file2) 
+new_images[2]= img.imread(file3) 
+new_images[3]= img.imread(file4) 
+new_images[4]= img.imread(file5) 
+
+   
+print("Shape of new_images is:",np.shape(new_images)) 
+print("length of new_images is:", len(new_images))
+
+
+# display the images in a row
+# they don't display properly as float
+# must convert to uint8
+# https://stackoverflow.com/questions/3584805/in-matplotlib-what-does-the-argument-mean-in-fig-add-subplot111
+
+plt.figure(figsize=(1,1))
+fig = plt.figure()
+for i in range(len(new_images)):
+    a=fig.add_subplot(1,5,i+1)
+    title = "image "
+    title +=str(i)
+    a.set_title(title)
+    image= new_images[i].squeeze()
+    image = image.astype(np.uint8)
+    plt.imshow(image)
+    
+ 
+#normalize the new images  
+print("begin normalization of new images")
+normalizeArray(new_images)
+print("normalization of new images complete")
+
+
+################
+### 7/29/2017
+################
+def displayImages(x,y,length):
+    plt.figure(figsize=(1,1))
+    fig = plt.figure()
+    for i in range(len(x)):
+        a=fig.add_subplot(1,length,i+1)
+        title = str(y[i])
+        a.set_title(title)
+        image= x[i].squeeze()
+        image = image.astype(np.uint8)
+        plt.imshow(image)
+
+#create an array from the training set
+training_images = np.ndarray(shape=(10,32,32,3))
+training_labels = [0] * 10
+for j in range (0,10):
+    index = random.randint(0, len(X_train))
+    training_images[j] = X_train[index]
+    training_labels[j] = y_train[index]
+    
+
+#display the normalized training images
+#they are already normalized at this point   
+print("displaying normalized training images")
+displayImages(training_images,training_labels,len(training_images))
+
+#create an array for the test set 
+test_images = np.ndarray(shape=(10,32,32,3))
+test_labels = [0] * 10
+for j in range (0,10):
+    index = random.randint(0, len(X_test))
+    test_images[j] = X_test[index]
+    test_labels[j] = y_test[index]
+  
+    
+ #display the test images 
+print("displaying normalized test images")
+displayImages(test_images,test_labels,len(test_images))
+    
+
+#Restore the model and evaluate accuracy on new images
+softmax = tf.nn.softmax(logits)
+with tf.Session() as sess: 
+    new_saver = tf.train.import_meta_graph('.\\lenet.meta')
+    new_saver.restore(sess, tf.train.latest_checkpoint('.'))
+    #saver.restore(sess, tf.train.latest_checkpoint('.'))
+    new_image_accuracy = evaluate(new_images, new_labels)
+    print("Test Accuracy new images = {:.3f}".format(new_image_accuracy))
+    new_image_accuracy = evaluate(training_images, training_labels)
+    print("Test Accuracy training images = {:.3f}".format(new_image_accuracy))
+    new_image_accuracy = evaluate(test_images, test_labels)
+    print("Test Accuracy test images = {:.3f}".format(new_image_accuracy))
+    ### added
+    result = sess.run(softmax, feed_dict={x: new_images})
+    values, indices = tf.nn.top_k(result, 5)
+    predictions  = sess.run(values)
+    predictionIndices  = sess.run(indices)
+    print("predictions")
+    print(predictions)
+    print("predictionIndices")
+    print(predictionIndices)
